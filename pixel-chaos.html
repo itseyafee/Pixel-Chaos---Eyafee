@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Chaos</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #111;
+      font-family: 'Courier New', monospace;
+      color: #0f0;
+    }
+    
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px 20px;
+      border-radius: 30px;
+      border: 2px solid #0f0;
+      box-shadow: 0 0 10px #0f0;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    
+    .canvas {
+      width: 100%;
+      height: 100%;
+      cursor: none;
+    }
+    
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      z-index: 100;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 30px;
+      border: 2px solid #0f0;
+      box-shadow: 0 0 10px #0f0;
+    }
+    
+    .mode-btn {
+      background: none;
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 8px 12px;
+      margin: 0 5px;
+      border-radius: 20px;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 12px;
+      min-width: 80px;
+    }
+    
+    .mode-btn:hover {
+      background-color: rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 15px #0f0;
+    }
+    
+    .mode-btn.active {
+      background-color: #0f0;
+      color: #000;
+    }
+    
+    .cursor {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px #0f0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      z-index: 999;
+      transform: translate(-50%, -50%);
+    }
+    
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      transition: transform 0.2s linear;
+    }
+    
+    .noise-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.05;
+      pointer-events: none;
+      background-image: url('data:image/png;base64,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');
+      z-index: 50;
+    }
+    
+    @keyframes glitch {
+      0% { transform: translate(0); filter: hue-rotate(0deg); }
+      25% { transform: translate(2px, -2px); filter: hue-rotate(90deg); }
+      50% { transform: translate(-2px, 1px); filter: hue-rotate(180deg); }
+      75% { transform: translate(1px, -1px); filter: hue-rotate(270deg); }
+      100% { transform: translate(0); filter: hue-rotate(360deg); }
+    }
+    
+    .scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 5px #0f0;
+      z-index: 40;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Pixel Chaos</h1>
+    </div>
+    
+    <canvas class="canvas" id="canvas"></canvas>
+    
+    <div class="controls">
+      <button class="mode-btn active" id="glitch">Glitch</button>
+      <button class="mode-btn" id="fractals">Fractals</button>
+      <button class="mode-btn" id="pixel">Pixel</button>
+      <button class="mode-btn" id="vortex">Vortex</button>
+      <button class="mode-btn" id="clear">Clear</button>
+    </div>
+    
+    <div class="cursor" id="cursor"></div>
+    <div class="noise-overlay"></div>
+    <div class="scanline" id="scanline"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const cursor = document.getElementById('cursor');
+      const scanline = document.getElementById('scanline');
+      const container = document.querySelector('.container');
+      
+      // Set up buttons
+      const glitchBtn = document.getElementById('glitch');
+      const fractalsBtn = document.getElementById('fractals');
+      const pixelBtn = document.getElementById('pixel');
+      const vortexBtn = document.getElementById('vortex');
+      const clearBtn = document.getElementById('clear');
+      
+      let currentMode = 'glitch';
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+      let hue = 0;
+      let particles = [];
+      let cursorSize = 20;
+      let angle = 0;
+      
+      // Resize canvas to full window
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      
+      // Cursor follower
+      document.addEventListener('mousemove', (e) => {
+        cursor.style.left = `${e.clientX}px`;
+        cursor.style.top = `${e.clientY}px`;
+      });
+      
+      // Scanline animation
+      function animateScanline() {
+        let position = 0;
+        setInterval(() => {
+          position = (position + 1) % window.innerHeight;
+          scanline.style.top = position + 'px';
+        }, 16);
+      }
+      
+      animateScanline();
+      
+      // Mode selection
+      const modes = [glitchBtn, fractalsBtn, pixelBtn, vortexBtn];
+      
+      modes.forEach(mode => {
+        mode.addEventListener('click', () => {
+          modes.forEach(m => m.classList.remove('active'));
+          mode.classList.add('active');
+          currentMode = mode.id;
+          
+          // Change cursor appearance based on mode
+          switch(currentMode) {
+            case 'glitch':
+              cursor.style.borderRadius = '50%';
+              cursor.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
+              break;
+            case 'fractals':
+              cursor.style.borderRadius = '5px';
+              cursor.style.backgroundColor = 'rgba(255, 0, 255, 0.5)';
+              break;
+            case 'pixel':
+              cursor.style.borderRadius = '0';
+              cursor.style.backgroundColor = 'rgba(0, 255, 255, 0.5)';
+              break;
+            case 'vortex':
+              cursor.style.borderRadius = '50% 0 50% 0';
+              cursor.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+              break;
+          }
+        });
+      });
+      
+      clearBtn.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles = [];
+        const existingParticles = document.querySelectorAll('.particle');
+        existingParticles.forEach(p => p.remove());
+      });
+      
+      // Drawing functions
+      function startDrawing(x, y) {
+        isDrawing = true;
+        lastX = x;
+        lastY = y;
+      }
+      
+      function draw(x, y) {
+        if (!isDrawing) return;
+        
+        hue = (hue + 1) % 360;
+        
+        switch(currentMode) {
+          case 'glitch':
+            drawGlitch(x, y);
+            break;
+          case 'fractals':
+            drawFractals(x, y);
+            break;
+          case 'pixel':
+            drawPixels(x, y);
+            break;
+          case 'vortex':
+            drawVortex(x, y);
+            break;
+        }
+        
+        lastX = x;
+        lastY = y;
+      }
+      
+      function stopDrawing() {
+        isDrawing = false;
+      }
+      
+      // Drawing modes
+      function drawGlitch(x, y) {
+        // Main stroke
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.lineWidth = Math.random() * 5 + 1;
+        ctx.stroke();
+        
+        // Echo strokes
+        for (let i = 0; i < 3; i++) {
+          const offsetX = (Math.random() - 0.5) * 20;
+          const offsetY = (Math.random() - 0.5) * 20;
+          
+          ctx.beginPath();
+          ctx.moveTo(lastX + offsetX, lastY + offsetY);
+          ctx.lineTo(x + offsetX, y + offsetY);
+          ctx.strokeStyle = `hsla(${(hue + 120 * i) % 360}, 100%, 50%, 0.5)`;
+          ctx.lineWidth = Math.random() * 3;
+          ctx.stroke();
+        }
+        
+        // Add DOM particles
+        if (Math.random() > 0.8) {
+          addGlitchParticle(x, y);
+        }
+      }
+      
+      function addGlitchParticle(x, y) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.width = `${Math.random() * 40 + 10}px`;
+        particle.style.height = `${Math.random() * 40 + 10}px`;
+        particle.style.backgroundColor = `hsla(${hue}, 100%, 50%, ${Math.random() * 0.5 + 0.2})`;
+        particle.style.animation = `glitch ${Math.random() * 2 + 0.5}s infinite`;
+        particle.style.zIndex = '30';
+        
+        container.appendChild(particle);
+        
+        setTimeout(() => {
+          particle.remove();
+        }, 2000);
+      }
+      
+      function drawFractals(x, y) {
+        const size = Math.random() * 20 + 10;
+        const angle = Math.random() * Math.PI * 2;
+        
+        drawFractalBranch(x, y, size, angle, 4);
+      }
+      
+      function drawFractalBranch(x, y, size, angle, depth) {
+        if (depth <= 0) return;
+        
+        const endX = x + Math.cos(angle) * size;
+        const endY = y + Math.sin(angle) * size;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = `hsla(${(hue + depth * 25) % 360}, 100%, 50%, ${depth * 0.2})`;
+        ctx.lineWidth = depth;
+        ctx.stroke();
+        
+        drawFractalBranch(endX, endY, size * 0.7, angle + Math.PI / 4, depth - 1);
+        drawFractalBranch(endX, endY, size * 0.7, angle - Math.PI / 4, depth - 1);
+      }
+      
+      function drawPixels(x, y) {
+        const pixelSize = Math.floor(Math.random() * 15) + 5;
+        const gridX = Math.floor(x / pixelSize) * pixelSize;
+        const gridY = Math.floor(y / pixelSize) * pixelSize;
+        
+        // Draw main pixel
+        ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.8)`;
+        ctx.fillRect(gridX, gridY, pixelSize, pixelSize);
+        
+        // Draw neighbor pixels with decreasing opacity
+        const neighbors = [
+          [1, 0], [0, 1], [-1, 0], [0, -1],
+          [1, 1], [-1, -1], [1, -1], [-1, 1]
+        ];
+        
+        neighbors.forEach((offset, i) => {
+          if (Math.random() > 0.5) {
+            const nX = gridX + offset[0] * pixelSize;
+            const nY = gridY + offset[1] * pixelSize;
+            ctx.fillStyle = `hsla(${(hue + 30) % 360}, 100%, 50%, ${0.7 - i * 0.05})`;
+            ctx.fillRect(nX, nY, pixelSize, pixelSize);
+          }
+        });
+      }
+      
+      function drawVortex(x, y) {
+        angle += 0.1;
+        
+        for (let i = 0; i < 12; i++) {
+          const radius = 20 + i * 5;
+          const particleAngle = angle + (i * Math.PI / 6);
+          
+          const pX = x + Math.cos(particleAngle) * radius;
+          const pY = y + Math.sin(particleAngle) * radius;
+          
+          ctx.beginPath();
+          ctx.arc(pX, pY, 3, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${(hue + i * 30) % 360}, 100%, 50%, ${1 - i * 0.05})`;
+          ctx.fill();
+          
+          // Connect to center
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(pX, pY);
+          ctx.strokeStyle = `hsla(${(hue + i * 30) % 360}, 100%, 50%, 0.3)`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+      
+      // Mouse Events
+      canvas.addEventListener('mousedown', (e) => {
+        startDrawing(e.clientX, e.clientY);
+      });
+      
+      canvas.addEventListener('mousemove', (e) => {
+        draw(e.clientX, e.clientY);
+      });
+      
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
+      
+      // Touch Events
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        cursor.style.left = `${touch.clientX}px`;
+        cursor.style.top = `${touch.clientY}px`;
+        startDrawing(touch.clientX, touch.clientY);
+      });
+      
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        cursor.style.left = `${touch.clientX}px`;
+        cursor.style.top = `${touch.clientY}px`;
+        draw(touch.clientX, touch.clientY);
+      });
+      
+      canvas.addEventListener('touchend', stopDrawing);
+      
+      // Easter egg - keyboard interaction
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          // Random explosion
+          const x = Math.random() * window.innerWidth;
+          const y = Math.random() * window.innerHeight;
+          
+          for (let i = 0; i < 20; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 100 + 50;
+            const endX = x + Math.cos(angle) * distance;
+            const endY = y + Math.sin(angle) * distance;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = `hsla(${Math.random() * 360}, 100%, 50%, 0.7)`;
+            ctx.lineWidth = Math.random() * 5 + 2;
+            ctx.stroke();
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
